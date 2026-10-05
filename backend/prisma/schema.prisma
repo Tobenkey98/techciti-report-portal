@@ -1,0 +1,211 @@
+// ---------------------------------------------------------------------------
+// TechCiti Tutor Report Portal — Prisma schema (MySQL / MariaDB)
+//
+// Terminology is deliberate and used consistently across the whole API:
+//   * "course"  — never "subject"
+//   * "level"   — never "grade"  (BEGINNER | INTERMEDIATE | ADVANCED)
+//   * "ageGroup" — KIDS | TEENS | ADULTS
+//
+// Generate the client with `npm run db:generate`.
+// ---------------------------------------------------------------------------
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// --------------------------------- Enums ----------------------------------
+
+enum AdminRole {
+  SUPER_ADMIN
+  ADMIN
+}
+
+enum AgeGroup {
+  KIDS
+  TEENS
+  ADULTS
+}
+
+enum Level {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+enum ProgressRating {
+  EXCELLENT
+  GOOD
+  FAIR
+  NEEDS_ATTENTION
+}
+
+enum ReportStatus {
+  DRAFT
+  SUBMITTED
+  REVIEWED
+  NEEDS_REVISION
+}
+
+/// Card-level status shown on the tutor's student list. Derived, never stored.
+enum TutorCardStatus {
+  NOT_STARTED
+  DRAFT
+  SUBMITTED
+  REVIEWED
+  NEEDS_REVISION
+}
+
+enum ActorType {
+  ADMIN
+  TUTOR
+  SYSTEM
+}
+
+// --------------------------------- Models ---------------------------------
+
+model Admin {
+  id           String    @id @default(cuid())
+  name         String    @db.VarChar(120)
+  email        String    @unique @db.VarChar(191)
+  passwordHash String    @map("password_hash") @db.VarChar(191)
+  role         AdminRole @default(ADMIN)
+  isActive     Boolean   @default(true) @map("is_active")
+  lastLoginAt  DateTime? @map("last_login_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  // Reports this admin has reviewed.
+  reviewedReports Report[] @relation("ReviewedByAdmin")
+
+  @@map("admins")
+}
+
+model Tutor {
+  id             String    @id @default(cuid())
+  fullName       String    @map("full_name") @db.VarChar(120)
+  email          String?   @unique @db.VarChar(191)
+  /// International format for wa.me deep links, e.g. +2348012345678
+  phone          String    @db.VarChar(32)
+  /// Unguessable private portal link token (48+ hex chars).
+  accessToken    String    @unique @map("access_token") @db.VarChar(128)
+  tokenRevokedAt DateTime? @map("token_revoked_at")
+  isActive       Boolean   @default(true) @map("is_active")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  assignments Assignment[]
+
+  @@index([isActive])
+  @@map("tutors")
+}
+
+model Student {
+  id          String    @id @default(cuid())
+  fullName    String    @map("full_name") @db.VarChar(120)
+  ageGroup    AgeGroup  @map("age_group")
+  parentName  String?   @map("parent_name") @db.VarChar(120)
+  parentPhone String?   @map("parent_phone") @db.VarChar(32)
+  parentEmail String?   @map("parent_email") @db.VarChar(191)
+  isActive    Boolean   @default(true) @map("is_active")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  assignments Assignment[]
+
+  @@index([ageGroup])
+  @@index([isActive])
+  @@map("students")
+}
+
+model Course {
+  id        String   @id @default(cuid())
+  name      String   @unique @db.VarChar(120)
+  category  String   @db.VarChar(60)
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  assignments Assignment[]
+
+  @@index([category])
+  @@map("courses")
+}
+
+/// Links one tutor to one student for one course at one level.
+/// A student may take several courses, and may have more than one tutor.
+model Assignment {
+  id        String   @id @default(cuid())
+  tutorId   String   @map("tutor_id") @db.VarChar(191)
+  studentId String   @map("student_id") @db.VarChar(191)
+  courseId  String   @map("course_id") @db.VarChar(191)
+  level     Level
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  tutor   Tutor    @relation(fields: [tutorId], references: [id], onDelete: Cascade)
+  student Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  course  Course   @relation(fields: [courseId], references: [id], onDelete: Restrict)
+  reports Report[]
+
+  @@unique([tutorId, studentId, courseId], name: "assignment_tutor_student_course")
+  @@index([tutorId, isActive])
+  @@index([studentId])
+  @@index([courseId])
+  @@index([level])
+  @@map("assignments")
+}
+
+/// One monthly report per assignment per month. UNIQUE (assignmentId, month)
+/// is what prevents duplicate submissions at the database level.
+model Report {
+  id                String          @id @default(cuid())
+  assignmentId      String          @map("assignment_id") @db.VarChar(191)
+  month             String          @db.Char(7) // "YYYY-MM"
+  topicsCovered     String          @map("topics_covered") @db.Text
+  continuityNeeded  Boolean         @default(false) @map("continuity_needed")
+  continuityNote    String?         @map("continuity_note") @db.Text
+  generalFeedback   String          @map("general_feedback") @db.Text
+  tutorComment      String          @map("tutor_comment") @db.Text
+  progressRating    ProgressRating? @map("progress_rating")
+  sessionsHeld      Int?            @map("sessions_held")
+  sessionsAttended  Int?            @map("sessions_attended")
+  status            ReportStatus    @default(DRAFT)
+  revisionNote      String?         @map("revision_note") @db.Text
+  submittedAt       DateTime?       @map("submitted_at")
+  reviewedAt        DateTime?       @map("reviewed_at")
+  reviewedByAdminId String?         @map("reviewed_by_admin_id") @db.VarChar(191)
+  createdAt         DateTime        @default(now()) @map("created_at")
+  updatedAt         DateTime        @updatedAt @map("updated_at")
+
+  assignment     Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  reviewedByAdmin Admin?     @relation("ReviewedByAdmin", fields: [reviewedByAdminId], references: [id], onDelete: SetNull)
+
+  @@unique([assignmentId, month], name: "report_assignment_month")
+  @@index([month, status])
+  @@index([status])
+  @@index([submittedAt])
+  @@map("reports")
+}
+
+model ActivityLog {
+  id         String    @id @default(cuid())
+  actorType  ActorType @map("actor_type")
+  /// Admin.id, Tutor.id, or a system identifier such as "seed".
+  actorId    String    @map("actor_id") @db.VarChar(191)
+  action     String    @db.VarChar(120)
+  entityType String    @map("entity_type") @db.VarChar(60)
+  entityId   String    @map("entity_id") @db.VarChar(191)
+  meta       Json?
+  createdAt  DateTime  @default(now()) @map("created_at")
+
+  @@index([actorType, actorId])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+  @@map("activity_logs")
+}

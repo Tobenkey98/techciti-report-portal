@@ -1,0 +1,151 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ------------------------------------------------------------------
+   TechCiti brand system — single source of truth.
+   Components consume Tailwind tokens, never raw hex values.
+   ------------------------------------------------------------------ */
+@layer base {
+  :root {
+    /* Core palette */
+    --primary: #ff5733;
+    --primary-hover: #e64a2a;
+    --primary-soft: #fff1ec;
+    --primary-foreground: #ffffff;
+
+    --background: #f8f9fa;
+    --surface: #ffffff;
+    --foreground: #1f2937;
+    --muted-foreground: #6b7280;
+    --border: #e5e7eb;
+
+    /* Status palette */
+    --success: #4caf50;
+    --warning: #f59e0b;
+    --danger: #dc2626;
+
+    /* Soft / tinted status backgrounds (badges, table row highlights) */
+    --success-soft: #edf7ed;
+    --warning-soft: #fef6e7;
+    --danger-soft: #fdecec;
+
+    /* Channel triplets so Tailwind can apply alpha modifiers (bg-primary/10) */
+    --primary-rgb: 255 87 51;
+    --primary-hover-rgb: 230 74 42;
+    --primary-soft-rgb: 255 241 236;
+    --primary-foreground-rgb: 255 255 255;
+    --background-rgb: 248 249 250;
+    --surface-rgb: 255 255 255;
+    --foreground-rgb: 31 41 55;
+    --muted-foreground-rgb: 107 114 128;
+    --border-rgb: 229 231 235;
+    --success-rgb: 76 175 80;
+    --warning-rgb: 245 158 11;
+    --danger-rgb: 220 38 38;
+    --success-soft-rgb: 237 247 237;
+    --warning-soft-rgb: 254 246 231;
+    --danger-soft-rgb: 253 236 236;
+
+    /* Signature slanted edge (echoes the techciti.ng hero) */
+    --slant-size: 56px;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "cv11", "ss01";
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Visible, on-brand focus for keyboard users everywhere */
+  :focus-visible {
+    @apply outline-none ring-2 ring-primary ring-offset-2 ring-offset-surface;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply font-bold tracking-tight text-foreground;
+  }
+
+  /* Keep numerals tidy in tables and stat cards */
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@layer components {
+  /* Slanted diagonal edge used on the login panel + header banners */
+  .slant-bottom {
+    --slant: var(--slant-size);
+    clip-path: polygon(
+      0 0,
+      100% 0,
+      100% calc(100% - var(--slant)),
+      calc(100% - var(--slant)) 100%,
+      0 100%
+    );
+  }
+
+  .slant-left {
+    --slant: var(--slant-size);
+    clip-path: polygon(
+      0 0,
+      calc(100% - var(--slant)) 0,
+      100% var(--slant),
+      100% 100%,
+      0 100%
+    );
+  }
+
+  .slant-right {
+    --slant: var(--slant-size);
+    clip-path: polygon(
+      0 0,
+      100% var(--slant),
+      100% 100%,
+      var(--slant) 100%,
+      0 calc(100% - var(--slant))
+    );
+  }
+
+  /* Subtle brand wash used behind hero sections */
+  .hero-grid {
+    background-image: radial-gradient(
+      circle at 1px 1px,
+      rgb(255 255 255 / 0.18) 1px,
+      transparent 0
+    );
+    background-size: 22px 22px;
+  }
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  body {
+    background: #fff !important;
+  }
+
+  .print-page {
+    box-shadow: none !important;
+    border: none !important;
+  }
+
+  @page {
+    size: A4;
+    margin: 14mm;
+  }
+}
