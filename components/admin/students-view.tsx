@@ -46,8 +46,8 @@ import {
 import { StudentDialog } from "@/components/admin/student-dialog";
 import { useAsyncData } from "@/hooks/use-async-data";
 import { useToast } from "@/hooks/use-toast";
-import { students as studentsApi } from "@/lib/api";
-import { gradeGroups, SUBJECTS } from "@/lib/constants";
+import { courses as coursesApi, students as studentsApi } from "@/lib/api";
+import { gradeGroups } from "@/lib/constants";
 import type { Student } from "@/lib/types";
 import { initials, initialsAvatarColor, prettyPhone } from "@/lib/utils";
 
@@ -68,6 +68,9 @@ export function StudentsView() {
 
   const list = data ?? [];
   const filtersActive = search !== "" || grade !== "all" || subject !== "all";
+
+  const { data: courseData } = useAsyncData(() => coursesApi.list(), []);
+  const courseOptions = (courseData ?? []).filter((course) => course.isActive);
 
   async function toggleStatus(student: Student) {
     const next = student.status === "active" ? "inactive" : "active";
@@ -151,9 +154,9 @@ export function StudentsView() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All subjects</SelectItem>
-                {SUBJECTS.map((value) => (
-                  <SelectItem key={value} value={value}>
-                    {value}
+                {courseOptions.map((course) => (
+                  <SelectItem key={course.id} value={course.name}>
+                    {course.name}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -221,7 +224,6 @@ export function StudentsView() {
               <TableRow>
                 <TableHead className="pl-5">Student</TableHead>
                 <TableHead>Grade</TableHead>
-                <TableHead>Gender</TableHead>
                 <TableHead>Parent / guardian</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="pr-5 text-right">Actions</TableHead>
@@ -257,8 +259,6 @@ export function StudentsView() {
                     <TableCell>
                       <Badge variant="outline">{student.grade}</Badge>
                     </TableCell>
-
-                    <TableCell className="text-sm text-muted-foreground">{student.gender}</TableCell>
 
                     <TableCell>
                       {student.parentName ? (

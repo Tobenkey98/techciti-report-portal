@@ -14,9 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { instructors as instructorsApi } from "@/lib/api";
-import { SUBJECTS } from "@/lib/constants";
 import type { Instructor, InstructorFormValues } from "@/lib/types";
-import { cn } from "@/lib/utils";
 
 const EMPTY: InstructorFormValues = {
   fullName: "",
@@ -50,21 +48,11 @@ export function TutorDialog({
             fullName: tutor.fullName,
             email: tutor.email,
             phone: tutor.phone,
-            subjects: tutor.subjects,
+            subjects: [],
           }
         : EMPTY,
     );
   }, [open, tutor]);
-
-  const toggleSubject = (subject: string) => {
-    setValues((current) => ({
-      ...current,
-      subjects: current.subjects.includes(subject)
-        ? current.subjects.filter((item) => item !== subject)
-        : [...current.subjects, subject],
-    }));
-    setErrors((current) => ({ ...current, subjects: "" }));
-  };
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -156,42 +144,6 @@ export function TutorDialog({
               </Field>
             </div>
 
-            <Field
-              id="tutor-subjects"
-              label="Subjects taught"
-              required
-              hint="Select all that apply"
-              error={errors.subjects}
-            >
-              <div
-                id="tutor-subjects"
-                role="group"
-                aria-label="Subjects taught"
-                className="flex flex-wrap gap-2"
-              >
-                {SUBJECTS.map((subject) => {
-                  const active = values.subjects.includes(subject);
-                  return (
-                    <button
-                      key={subject}
-                      type="button"
-                      role="checkbox"
-                      aria-checked={active}
-                      onClick={() => toggleSubject(subject)}
-                      className={cn(
-                        "inline-flex min-h-9 items-center rounded-full border px-3.5 py-1.5 text-sm font-semibold transition-colors",
-                        "focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
-                        active
-                          ? "border-primary bg-primary text-primary-foreground"
-                          : "border-border bg-surface text-muted-foreground hover:border-primary hover:bg-primary-soft hover:text-primary",
-                      )}
-                    >
-                      {subject}
-                    </button>
-                  );
-                })}
-              </div>
-            </Field>
           </DialogBody>
 
           <DialogFooter>

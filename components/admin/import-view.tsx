@@ -30,55 +30,48 @@ import type { ImportKind, ImportPreview } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 const TEMPLATES: Record<ImportKind, string> = {
-  instructors: "Full name,Email,Phone,Subjects\nAmaka Obi,amaka.obi@techciti.ng,08031152201,\"Mathematics, Further Mathematics\"",
+  instructors: "Full name,Email,Phone\nAmaka Obi,amaka.obi@techciti.ng,08031152201",
   students:
-    "Full name,Grade,Gender,Parent name,Parent phone\nChidera Nwosu,Primary 5,Female,Mrs Ngozi Nwosu,08032241877",
+    "Full name,Age group,Parent name,Parent phone,Parent email\nZainab Balogun,KIDS,Mrs Fatima Balogun,08023456789,parent@example.com",
 };
 
 export function ImportView() {
   const toast = useToast();
   const [kind, setKind] = React.useState<ImportKind>("instructors");
   const [fileName, setFileName] = React.useState<string | null>(null);
-  const [rows, setRows] = React.useState<Record<string, string>[]>([]);
+  const [file, setFile] = React.useState<File | null>(null);
   const [preview, setPreview] = React.useState<ImportPreview | null>(null);
   const [parsing, setParsing] = React.useState(false);
   const [confirmOpen, setConfirmOpen] = React.useState(false);
   const [committing, setCommitting] = React.useState(false);
   const inputRef = React.useRef<HTMLInputElement>(null);
 
-  async function handleFile(file: File) {
+  async function handleFile(next: File) {
     setParsing(true);
-    setFileName(file.name);
+    setFileName(next.name);
+    setFile(next);
     setPreview(null);
 
     try {
-      const parsed = await parseFile(file);
-      if (parsed.length === 0) {
-        toast.error({
-          title: "No rows found",
-          description: "The file looks empty. Check it has a header row and at least one record.",
-        });
-        setRows([]);
-        return;
-      }
-      setRows(parsed);
-      const result = await bulkImport.preview(kind, parsed);
+      const result = await bulkImport.preview(kind, next);
       setPreview(result);
     } catch (error) {
       toast.error({
         title: "Could not read file",
         description: error instanceof Error ? error.message : "Unsupported file.",
       });
-      setRows([]);
+      setFile(null);
+      setFileName(null);
     } finally {
       setParsing(false);
     }
   }
 
   async function handleCommit() {
+    if (!file) return;
     setCommitting(true);
     try {
-      const result = await bulkImport.commit(kind, rows);
+      const result = await bulkImport.commit(kind, file);
       toast.success({
         title: `Imported ${result.created} ${kind}`,
         description:
@@ -87,7 +80,7 @@ export function ImportView() {
             : "Everything landed cleanly.",
       });
       setConfirmOpen(false);
-      setRows([]);
+      setFile(null);
       setPreview(null);
       setFileName(null);
       if (inputRef.current) inputRef.current.value = "";
@@ -126,7 +119,7 @@ export function ImportView() {
         onValueChange={(value) => {
           setKind(value as ImportKind);
           setPreview(null);
-          setRows([]);
+          setFile(null);
           setFileName(null);
         }}
       >
@@ -344,72 +337,3 @@ function ImportPanel({
 
 /* --------------------------------- Parsing --------------------------------- */
 
-/** Reads CSV natively; uses SheetJS for .xlsx/.xls (loaded on demand). */
-async function parseFile(file: File): Promise<Record<string, string>[]> {
-  const name = file.name.toLowerCase();
-
-  if (name.endsWith(".csv") || file.type === "text/csv") {
-    return parseCsv(await file.text());
-  }
-
-  const XLSX = await import("xlsx");
-  const buffer = await file.arrayBuffer();
-  const workbook = XLSX.read(buffer, { type: "array" });
-  const sheet = workbook.Sheets[workbook.SheetNames[0] ?? ""];
-  if (!sheet) return [];
-  return XLSX.utils.sheet_to_json<Record<string, string>>(sheet, { defval: "" });
-}
-
-function parseCsv(text: string): Record<string, string>[] {
-  const rows: string[][] = [];
-  let current: string[] = [];
-  let field = "";
-  let inQuotes = false;
-
-  for (let index = 0; index < text.length; index += 1) {
-    const character = text[index];
-
-    if (inQuotes) {
-      if (character === '"') {
-        if (text[index + 1] === '"') {
-          field += '"';
-          index += 1;
-        } else {
-          inQuotes = false;
-        }
-      } else {
-        field += character;
-      }
-      continue;
-    }
-
-    if (character === '"') {
-      inQuotes = true;
-    } else if (character === ",") {
-      current.push(field);
-      field = "";
-    } else if (character === "\n") {
-      current.push(field);
-      rows.push(current);
-      current = [];
-      field = "";
-    } else if (character !== "\r") {
-      field += character;
-    }
-  }
-
-  if (field.length > 0 || current.length > 0) {
-    current.push(field);
-    rows.push(current);
-  }
-
-  const [header, ...body] = rows.filter((row) => row.some((cell) => cell.trim() !== ""));
-  if (!header) return [];
-
-  return body.map((row) =>
-    header.reduce<Record<string, string>>((accumulator, key, index) => {
-      accumulator[key.trim()] = (row[index] ?? "").trim();
-      return accumulator;
-    }, {}),
-  );
-}

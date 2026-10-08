@@ -54,6 +54,23 @@ const booleanish = z
     typeof value === "boolean" ? value : ["1", "true", "yes", "on"].includes(value.toLowerCase()),
   );
 
+/**
+ * A comma-separated allowlist of origins, one entry validated per origin.
+ *
+ * Trailing slashes are stripped and duplicates collapsed here rather than at
+ * every comparison site, so `https://a.ng/` and `https://a.ng` are one entry
+ * instead of two that never both match. The schema still reports which entry
+ * was wrong, so a typo names the offending value instead of failing opaquely.
+ */
+const originList = z
+  .string()
+  .transform((value) => [...new Set(value.split(",").map((part) => part.trim()).filter(Boolean))])
+  .refine((list) => list.length > 0, "must list at least one origin")
+  .refine((list) => list.every((entry) => z.string().url().safeParse(entry).success), (list) => ({
+    message: `not a valid origin URL: ${list.find((entry) => !z.string().url().safeParse(entry).success)}`,
+  }))
+  .transform((list) => list.map((entry) => entry.replace(/\/+$/, "")));
+
 const schema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   PORT: z.coerce.number().int().positive().default(4000),
@@ -69,10 +86,19 @@ const schema = z.object({
   SUPER_ADMIN_EMAIL: z.string().email().default("admin@techciti.ng"),
   SUPER_ADMIN_PASSWORD: z.string().min(8).default("TechCiti2026!"),
 
-  /** Admin deployment origin. ONLY this origin may call /api/admin/*. */
-  ADMIN_ORIGIN: z.string().url(),
-  /** Tutor deployment origin. ONLY this origin may call /api/tutor/*. */
-  TUTOR_ORIGIN: z.string().url(),
+  /**
+   * Origins allowed to call `/api/admin/*`, comma-separated.
+   *
+   * More than one is permitted because a single Next.js deployment often
+   * serves both `/admin` and `/t/<token>` from the same host, in which case
+   * the admin and tutor apps legitimately share an origin and both lists
+   * contain it. Splitting the two apps across different domains remains
+   * supported: list the admin domain only in ADMIN_ORIGIN and only the tutor
+   * domain in TUTOR_ORIGIN, and the namespaces stay mutually exclusive.
+   */
+  ADMIN_ORIGIN: originList,
+  /** Origins allowed to call `/api/tutor/*.`, comma-separated. See ADMIN_ORIGIN. */
+  TUTOR_ORIGIN: originList,
   /** Public base URL of the tutor app, used to build /t/<token> links. */
   TUTOR_PORTAL_URL: z.string().url(),
 
@@ -106,10 +132,18 @@ export const env = {
   uploadMaxBytes: raw.UPLOAD_MAX_MB * 1024 * 1024,
 } as const;
 
-/** Allowed origins, split by portal so a tutor app can never reach admin routes. */
+/**
+ * Allowed origins, split by portal so a tutor app can never reach admin routes.
+ *
+ * Both are allowlists because one Next.js deployment commonly serves `/admin`
+ * and `/t/<token>` from the same host, which puts the same origin in both.
+ * That does not weaken the split: a *separate* admin host and tutor host can
+ * still each list only themselves, and `enforceOrigin` still rejects any
+ * request whose Origin is absent from the relevant list.
+ */
 export const origins = {
-  admin: raw.ADMIN_ORIGIN.replace(/\/+$/, ""),
-  tutor: raw.TUTOR_ORIGIN.replace(/\/+$/, ""),
+  admin: raw.ADMIN_ORIGIN,
+  tutor: raw.TUTOR_ORIGIN,
 } as const;
 
 export type Env = typeof env;

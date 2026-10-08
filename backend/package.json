@@ -21,6 +21,7 @@
     "db:sql": "node scripts/write-schema-sql.mjs",
     "db:reset": "prisma migrate reset --force",
     "seed": "tsx prisma/seed.ts",
+    "db:clear": "node scripts/clear-database.mjs",
     "setup": "npm run db:generate && npm run db:push && npm run seed"
   },
   "dependencies": {

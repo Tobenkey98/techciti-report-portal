@@ -23,6 +23,7 @@ export function CopyButton({
   className?: string;
   variant?: ButtonProps["variant"];
   size?: ButtonProps["size"];
+  disabled?: boolean;
   onCopied?: () => void;
 }) {
   const { copied, copy } = useCopyToClipboard();

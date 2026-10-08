@@ -30,10 +30,10 @@ import { useAsyncData } from "@/hooks/use-async-data";
 import { useToast } from "@/hooks/use-toast";
 import {
   assignments as assignmentsApi,
+  courses as coursesApi,
   instructors as instructorsApi,
   students as studentsApi,
 } from "@/lib/api";
-import { SUBJECTS } from "@/lib/constants";
 import type { Assignment, Instructor, Student } from "@/lib/types";
 import { cn, pluralise } from "@/lib/utils";
 
@@ -42,12 +42,14 @@ export function AssignmentsView() {
   const [search, setSearch] = React.useState("");
   const [saving, setSaving] = React.useState(false);
   const [formErrors, setFormErrors] = React.useState<Record<string, string>>({});
-  const [form, setForm] = React.useState({ instructorId: "", studentId: "", subject: "" });
+  const [form, setForm] = React.useState({ instructorId: "", studentId: "", subject: "", level: "BEGINNER" as const });
   const [removing, setRemoving] = React.useState<Assignment | null>(null);
 
   const instructors = useAsyncData<Instructor[]>(() => instructorsApi.list({ status: "active" }), []);
   const students = useAsyncData<Student[]>(() => studentsApi.list({ status: "active" }), []);
   const list = useAsyncData<Assignment[]>(() => assignmentsApi.list(), []);
+  const courseList = useAsyncData(() => coursesApi.list(), []);
+  const courseOptions = (courseList.data ?? []).filter((course) => course.isActive);
 
   const assignmentRows = React.useMemo(() => {
     const tutorMap = new Map((instructors.data ?? []).map((tutor) => [tutor.id, tutor]));
@@ -69,10 +71,6 @@ export function AssignmentsView() {
       : rows;
   }, [list.data, instructors.data, students.data, search]);
 
-  const selectedTutor = (instructors.data ?? []).find((tutor) => tutor.id === form.instructorId);
-  const suggestedSubjects =
-    selectedTutor?.subjects ?? (Array.from(SUBJECTS) as string[]);
-
   async function handleCreate(event: React.FormEvent) {
     event.preventDefault();
     setSaving(true);
@@ -84,13 +82,21 @@ export function AssignmentsView() {
         title: "Tutor assigned",
         description: "They will see this student in their portal right away.",
       });
-      setForm({ instructorId: "", studentId: "", subject: "" });
+      setForm({ instructorId: "", studentId: "", subject: "", level: "BEGINNER" });
       await list.refresh();
     } catch (error) {
-      const fieldErrors =
+      const rawErrors =
         error && typeof error === "object" && "fieldErrors" in error
           ? ((error as { fieldErrors?: Record<string, string> }).fieldErrors ?? {})
           : {};
+      // The backend names its fields tutorId/courseId; the form uses
+      // instructorId/subject — remap so errors land under the right inputs.
+      const fieldErrors: Record<string, string> = {};
+      for (const [key, message] of Object.entries(rawErrors)) {
+        if (key === "tutorId") fieldErrors.instructorId = message;
+        else if (key === "courseId") fieldErrors.subject = message;
+        else fieldErrors[key] = message;
+      }
       setFormErrors(
         Object.keys(fieldErrors).length
           ? fieldErrors
@@ -185,10 +191,10 @@ export function AssignmentsView() {
             </Field>
 
             <Field
-              id="assign-subject"
-              label="Subject"
+              id="assign-course"
+              label="Course"
               required
-              hint={selectedTutor ? "Taught by this tutor" : "Any subject"}
+              hint="From the course catalogue"
               error={formErrors.subject}
             >
               <Select
@@ -198,15 +204,37 @@ export function AssignmentsView() {
                   setFormErrors((current) => ({ ...current, subject: "", form: "" }));
                 }}
               >
-                <SelectTrigger id="assign-subject">
-                  <SelectValue placeholder="Select subject" />
+                <SelectTrigger id="assign-course">
+                  <SelectValue placeholder="Select course" />
                 </SelectTrigger>
                 <SelectContent>
-                  {suggestedSubjects.map((subject) => (
-                    <SelectItem key={subject} value={subject}>
-                      {subject}
+                  {courseOptions.map((course) => (
+                    <SelectItem key={course.id} value={course.id}>
+                      {course.name}
                     </SelectItem>
                   ))}
+                </SelectContent>
+              </Select>
+            </Field>
+
+            <Field id="assign-level" label="Level" required error={formErrors.level}>
+              <Select
+                value={form.level}
+                onValueChange={(value) => {
+                  setForm((current) => ({
+                    ...current,
+                    level: value as typeof form.level,
+                  }));
+                  setFormErrors((current) => ({ ...current, level: "", form: "" }));
+                }}
+              >
+                <SelectTrigger id="assign-level">
+                  <SelectValue placeholder="Select level" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="BEGINNER">Beginner</SelectItem>
+                  <SelectItem value="INTERMEDIATE">Intermediate</SelectItem>
+                  <SelectItem value="ADVANCED">Advanced</SelectItem>
                 </SelectContent>
               </Select>
             </Field>

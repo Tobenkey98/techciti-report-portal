@@ -10,9 +10,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useAdminSession } from "@/hooks/use-admin-session";
-import { DEMO_ADMIN } from "@/lib/constants";
-import { DEMO_TUTOR_LINKS as TUTOR_LINKS } from "@/lib/mock-data";
-import { firstName } from "@/lib/utils";
 
 export function LoginForm() {
   const router = useRouter();
@@ -55,23 +52,32 @@ export function LoginForm() {
     }
   }
 
-  function fillDemo() {
-    setEmail(DEMO_ADMIN.email);
-    setPassword(DEMO_ADMIN.password);
-    setErrors({});
-  }
-
   return (
-    <div className="grid min-h-screen lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)]">
-      {/* Slanted orange panel */}
-      <aside className="slant-left relative hidden overflow-hidden bg-primary p-12 text-primary-foreground lg:flex lg:flex-col lg:justify-between">
-        <div className="hero-grid pointer-events-none absolute inset-0 opacity-70" aria-hidden />
+    <div className="relative grid min-h-screen overflow-hidden lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)]">
+      {/* Ambient brand glow behind the whole screen */}
+      <div aria-hidden className="brand-glow pointer-events-none absolute inset-0 -z-10" />
+
+      {/* Brand panel */}
+      <aside className="brand-gradient relative hidden overflow-hidden p-12 text-primary-foreground lg:flex lg:flex-col lg:justify-between">
+        <div className="hero-grid pointer-events-none absolute inset-0 opacity-60" aria-hidden />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -bottom-24 -right-24 size-72 rounded-full bg-primary-foreground/10 blur-2xl"
+        />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -left-16 top-1/3 size-56 rounded-full bg-primary-foreground/10 blur-2xl"
+        />
+
         <Link href="/" className="relative w-fit">
           <Logo invert markClassName="size-10" />
         </Link>
 
         <div className="relative max-w-md">
-          <h2 className="text-3xl font-extrabold leading-tight tracking-tight xl:text-4xl">
+          <span className="inline-flex items-center gap-2 rounded-full bg-primary-foreground/15 px-3 py-1 text-xs font-bold uppercase tracking-[0.14em]">
+            Staff workspace
+          </span>
+          <h2 className="mt-5 text-3xl font-extrabold leading-tight tracking-tight xl:text-4xl">
             Every tutor report, in one place.
           </h2>
           <p className="mt-4 text-lg leading-relaxed text-primary-foreground/90">
@@ -79,14 +85,17 @@ export function LoginForm() {
             actually read.
           </p>
 
-          <ul className="mt-9 space-y-4">
+          <ul className="mt-9 space-y-3">
             {[
               "Live submission tracking for every tutor",
               "Branded PDF and Word reports in one click",
               "Bulk import for tutors and students",
             ].map((item) => (
-              <li key={item} className="flex items-start gap-3 text-[15px]">
-                <span className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full bg-primary-foreground/20">
+              <li
+                key={item}
+                className="flex items-start gap-3 rounded-card bg-primary-foreground/10 px-4 py-3 text-[15px] backdrop-blur-sm"
+              >
+                <span className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full bg-primary-foreground/25">
                   <Sparkles className="size-3.5" aria-hidden />
                 </span>
                 {item}
@@ -101,8 +110,8 @@ export function LoginForm() {
       </aside>
 
       {/* Form */}
-      <div className="flex flex-col bg-surface">
-        <header className="flex items-center justify-between border-b border-border px-5 py-4 lg:hidden">
+      <div className="flex flex-col bg-surface/70 backdrop-blur-sm">
+        <header className="flex items-center justify-between border-b border-border/70 px-5 py-4 lg:hidden">
           <Logo showSub />
           <Button asChild variant="ghost" size="sm">
             <Link href="/">
@@ -131,7 +140,11 @@ export function LoginForm() {
               Use your TechCiti admin credentials to manage tutors, students and reports.
             </p>
 
-            <form onSubmit={handleSubmit} className="mt-8 space-y-5" noValidate>
+            <form
+              onSubmit={handleSubmit}
+              className="mt-8 space-y-5 rounded-card border border-border/70 bg-surface p-6 shadow-card ring-1 ring-black/[0.02] sm:p-7"
+              noValidate
+            >
               {errors.form ? (
                 <div
                   role="alert"
@@ -173,9 +186,6 @@ export function LoginForm() {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="password">Password</Label>
-                  <span className="text-xs font-semibold text-muted-foreground">
-                    Demo access below
-                  </span>
                 </div>
                 <div className="relative">
                   <Lock
@@ -217,41 +227,10 @@ export function LoginForm() {
               </Button>
             </form>
 
-            {/* Demo helper */}
-            <div className="mt-8 rounded-card border border-border bg-background p-4">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="text-sm font-bold text-foreground">Demo credentials</p>
-                  <p className="mt-0.5 truncate font-mono text-xs text-muted-foreground">
-                    {DEMO_ADMIN.email} · {DEMO_ADMIN.password}
-                  </p>
-                </div>
-                <Button type="button" variant="secondary" size="sm" onClick={fillDemo}>
-                  Fill in
-                </Button>
-              </div>
-
-              <div className="mt-4 border-t border-border pt-4">
-                <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
-                  Tutor portal links
-                </p>
-                <ul className="mt-2 space-y-1">
-                  {TUTOR_LINKS.slice(0, 3).map((tutor) => (
-                    <li key={tutor.id}>
-                      <Link
-                        href={tutor.path}
-                        className="flex items-center justify-between gap-3 rounded-lg px-2 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-primary-soft hover:text-primary"
-                      >
-                        <span className="truncate">
-                          {firstName(tutor.fullName)} · {tutor.subjects[0]}
-                        </span>
-                        <span className="shrink-0 text-xs text-muted-foreground">Open →</span>
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
+            <p className="mt-6 text-center text-sm leading-relaxed text-muted-foreground">
+              Tutors don&apos;t sign in here — each tutor uses the private link shared
+              with them by an admin.
+            </p>
           </div>
         </div>
       </div>

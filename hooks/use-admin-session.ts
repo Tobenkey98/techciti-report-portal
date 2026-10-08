@@ -14,9 +14,8 @@ interface AdminSessionState {
 /**
  * Client-side admin session.
  *
- * The mock backend keeps the session in localStorage. A real backend should
- * return an httpOnly cookie instead — nothing else in the app changes, because
- * the UI only ever asks `useAdminSession()` for the truth.
+ * The backend keeps the session in an httpOnly cookie; this hook just caches
+ * what `auth.getSession()` reports so the UI never has to know the transport.
  */
 let cache: AdminSession | null = null;
 let cacheLoaded = false;

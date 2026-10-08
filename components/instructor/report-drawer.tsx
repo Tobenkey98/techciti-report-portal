@@ -191,7 +191,21 @@ export function ReportDrawer({
     } catch (error) {
       setConfirmOpen(false);
       const message = error instanceof Error ? error.message : "Something went wrong.";
-      if (message.toLowerCase().includes("already been submitted")) {
+      const fieldErrors =
+        error && typeof error === "object" && "fieldErrors" in error
+          ? ((error as { fieldErrors?: Record<string, string> }).fieldErrors ?? {})
+          : {};
+      if (Object.keys(fieldErrors).length > 0) {
+        // Show exactly which answers need attention, and jump to the first one.
+        setErrors((current) => ({ ...current, ...fieldErrors }));
+        const firstKey = Object.keys(fieldErrors)[0];
+        const node = bodyRef.current?.querySelector<HTMLElement>(`[data-field="${firstKey}"]`);
+        node?.scrollIntoView({ behavior: "smooth", block: "center" });
+        toast.warning({
+          title: "Some fields need attention",
+          description: "Review the highlighted answers, then submit again.",
+        });
+      } else if (message.toLowerCase().includes("already been submitted")) {
         toast.error({ title: "Already submitted", description: message });
         onSubmitted();
       } else {

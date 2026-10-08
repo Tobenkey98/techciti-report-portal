@@ -9,8 +9,10 @@ import { Button } from "@/components/ui/button";
  */
 export function InvalidLink({ token }: { token?: string }) {
   return (
-    <main id="main-content" className="flex min-h-screen flex-col bg-background">
-      <header className="border-b border-border bg-surface">
+    <main id="main-content" className="relative flex min-h-screen flex-col overflow-hidden bg-background">
+      <div aria-hidden className="brand-glow pointer-events-none absolute inset-0 -z-10" />
+
+      <header className="border-b border-border/70">
         <div className="mx-auto flex w-full max-w-5xl items-center justify-between px-5 py-4 sm:px-8">
           <Logo showSub />
           <Button asChild variant="ghost" size="sm">
@@ -20,12 +22,15 @@ export function InvalidLink({ token }: { token?: string }) {
       </header>
 
       <div className="flex flex-1 items-center justify-center px-5 py-14 sm:px-8">
-        <div className="w-full max-w-lg text-center">
-          <span className="mx-auto flex size-16 items-center justify-center rounded-2xl bg-primary-soft text-primary">
+        <div className="w-full max-w-lg rounded-card border border-border/70 bg-surface p-8 text-center shadow-card ring-1 ring-black/[0.02] sm:p-10">
+          <span className="mx-auto flex size-16 items-center justify-center rounded-3xl bg-primary-soft text-primary shadow-brand-soft">
             <LifeBuoy className="size-8" aria-hidden />
           </span>
 
-          <h1 className="mt-7 text-2xl font-extrabold tracking-tight sm:text-3xl">
+          <p className="mt-6 text-xs font-bold uppercase tracking-[0.16em] text-primary">
+            Revoked link
+          </p>
+          <h1 className="mt-2 text-2xl font-extrabold tracking-tight sm:text-3xl">
             This link isn&apos;t valid
           </h1>
 
@@ -36,7 +41,7 @@ export function InvalidLink({ token }: { token?: string }) {
           </p>
 
           {token ? (
-            <p className="mt-5 inline-block rounded-lg bg-surface px-3 py-2 font-mono text-xs text-muted-foreground ring-1 ring-border">
+            <p className="mt-5 inline-block rounded-button bg-background px-3 py-2 font-mono text-xs text-muted-foreground ring-1 ring-border">
               Link used: /t/{token}
             </p>
           ) : null}

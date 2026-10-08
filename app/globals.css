@@ -46,9 +46,6 @@
     --success-soft-rgb: 237 247 237;
     --warning-soft-rgb: 254 246 231;
     --danger-soft-rgb: 253 236 236;
-
-    /* Signature slanted edge (echoes the techciti.ng hero) */
-    --slant-size: 56px;
   }
 
   * {
@@ -85,40 +82,6 @@
 }
 
 @layer components {
-  /* Slanted diagonal edge used on the login panel + header banners */
-  .slant-bottom {
-    --slant: var(--slant-size);
-    clip-path: polygon(
-      0 0,
-      100% 0,
-      100% calc(100% - var(--slant)),
-      calc(100% - var(--slant)) 100%,
-      0 100%
-    );
-  }
-
-  .slant-left {
-    --slant: var(--slant-size);
-    clip-path: polygon(
-      0 0,
-      calc(100% - var(--slant)) 0,
-      100% var(--slant),
-      100% 100%,
-      0 100%
-    );
-  }
-
-  .slant-right {
-    --slant: var(--slant-size);
-    clip-path: polygon(
-      0 0,
-      100% var(--slant),
-      100% 100%,
-      var(--slant) 100%,
-      0 calc(100% - var(--slant))
-    );
-  }
-
   /* Subtle brand wash used behind hero sections */
   .hero-grid {
     background-image: radial-gradient(
@@ -127,6 +90,39 @@
       transparent 0
     );
     background-size: 22px 22px;
+  }
+
+  /* Soft brand gradient used on modern hero panels */
+  .brand-gradient {
+    background-image: linear-gradient(
+      135deg,
+      rgb(var(--primary-rgb) / 1) 0%,
+      rgb(var(--primary-hover-rgb) / 1) 100%
+    );
+  }
+
+  /* Gentle ambient glow behind modern hero sections */
+  .brand-glow {
+    background:
+      radial-gradient(60% 60% at 15% 10%, rgb(var(--primary-rgb) / 0.14), transparent 70%),
+      radial-gradient(50% 50% at 85% 0%, rgb(var(--primary-rgb) / 0.10), transparent 70%);
+  }
+
+  /* Frosted surface used for sticky headers / floating cards */
+  .glass {
+    background: rgb(var(--surface-rgb) / 0.82);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  /* Modern card hover lift (pair with transition) */
+  .lift {
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+  }
+  .lift:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-hover, 0 18px 38px -16px rgb(16 24 40 / 0.18));
+    border-color: rgb(var(--primary-rgb) / 0.28);
   }
 }
 

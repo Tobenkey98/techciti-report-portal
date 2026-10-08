@@ -38,11 +38,12 @@ import {
 } from "@/components/ui/table";
 import { useAsyncData } from "@/hooks/use-async-data";
 import {
+  courses as coursesApi,
   instructors as instructorsApi,
   reports as reportsApi,
   students as studentsApi,
 } from "@/lib/api";
-import { gradeGroups, SUBJECTS } from "@/lib/constants";
+import { gradeGroups } from "@/lib/constants";
 import type {
   Instructor,
   PaginatedResult,
@@ -79,6 +80,8 @@ export function ReportsView() {
 
   const tutors = useAsyncData<Instructor[]>(() => instructorsApi.list(), []);
   const students = useAsyncData<Student[]>(() => studentsApi.list(), []);
+  const courseList = useAsyncData(() => coursesApi.list(), []);
+  const courseOptions = (courseList.data ?? []).filter((course) => course.isActive);
 
   const query = React.useMemo(
     () => ({
@@ -223,9 +226,9 @@ export function ReportsView() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All subjects</SelectItem>
-                  {SUBJECTS.map((value) => (
-                    <SelectItem key={value} value={value}>
-                      {value}
+                  {courseOptions.map((course) => (
+                    <SelectItem key={course.id} value={course.name}>
+                      {course.name}
                     </SelectItem>
                   ))}
                 </SelectContent>

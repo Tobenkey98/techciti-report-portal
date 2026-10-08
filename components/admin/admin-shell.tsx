@@ -7,6 +7,7 @@ import {
   ClipboardList,
   GraduationCap,
   LayoutDashboard,
+  LibraryBig,
   Link2,
   LogOut,
   Menu,
@@ -34,12 +35,13 @@ export const ADMIN_NAV: AdminNavItem[] = [
   { href: "/admin/tutors", label: "Tutors", icon: GraduationCap },
   { href: "/admin/students", label: "Students", icon: Users },
   { href: "/admin/assignments", label: "Assignments", icon: Link2 },
+  { href: "/admin/courses", label: "Courses", icon: LibraryBig },
   { href: "/admin/import", label: "Bulk import", icon: Upload },
 ];
 
 /**
  * Admin chrome: fixed sidebar on desktop, slide-over navigation on mobile,
- * plus the mock-session guard that redirects to /admin/login when needed.
+ * plus the session guard that redirects to /admin/login when needed.
  */
 export function AdminShell({ children }: { children: React.ReactNode }) {
   const { session, loading, signOut } = useAdminSession();
@@ -64,51 +66,53 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-background">
       {/* Mobile top bar */}
-      <header className="sticky top-0 z-40 flex items-center justify-between gap-3 border-b border-border bg-surface px-4 py-3 lg:hidden">
-        <Logo showSub />
-        <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-          <SheetTrigger asChild>
-            <Button variant="outline" size="icon" aria-label="Open navigation menu">
-              <Menu aria-hidden />
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="left" className="sm:max-w-[300px]" aria-describedby={undefined}>
-            <SheetTitle className="sr-only">Navigation</SheetTitle>
-            <div className="flex h-full flex-col">
-              <div className="border-b border-border px-5 py-4">
-                <Logo showSub />
+      <header className="glass sticky top-0 z-40 border-b border-border/70 shadow-header lg:hidden">
+        <div className="flex items-center justify-between gap-3 px-4 py-3">
+          <Logo showSub />
+          <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+            <SheetTrigger asChild>
+              <Button variant="outline" size="icon" aria-label="Open navigation menu">
+                <Menu aria-hidden />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="sm:max-w-[300px]" aria-describedby={undefined}>
+              <SheetTitle className="sr-only">Navigation</SheetTitle>
+              <div className="flex h-full flex-col">
+                <div className="border-b border-border/70 px-5 py-4">
+                  <Logo showSub />
+                </div>
+                <nav className="flex-1 space-y-1.5 p-3" aria-label="Admin sections">
+                  {ADMIN_NAV.map((item) => (
+                    <NavLink
+                      key={item.href}
+                      href={item.href}
+                      label={item.label}
+                      icon={<item.icon className="size-[18px]" aria-hidden />}
+                      active={isActive(pathname, item.href, item.exact)}
+                      onNavigate={() => setMobileOpen(false)}
+                    />
+                  ))}
+                </nav>
+                <div className="border-t border-border/70 p-3">
+                  <Button variant="ghost" className="w-full justify-start" onClick={handleSignOut}>
+                    <LogOut aria-hidden />
+                    Sign out
+                  </Button>
+                </div>
               </div>
-              <nav className="flex-1 space-y-1 p-3" aria-label="Admin sections">
-                {ADMIN_NAV.map((item) => (
-                  <NavLink
-                    key={item.href}
-                    href={item.href}
-                    label={item.label}
-                    icon={<item.icon className="size-[18px]" aria-hidden />}
-                    active={isActive(pathname, item.href, item.exact)}
-                    onNavigate={() => setMobileOpen(false)}
-                  />
-                ))}
-              </nav>
-              <div className="border-t border-border p-3">
-                <Button variant="ghost" className="w-full justify-start" onClick={handleSignOut}>
-                  <LogOut aria-hidden />
-                  Sign out
-                </Button>
-              </div>
-            </div>
-          </SheetContent>
-        </Sheet>
+            </SheetContent>
+          </Sheet>
+        </div>
       </header>
 
       <div className="lg:flex">
         {/* Desktop sidebar */}
-        <aside className="sticky top-0 hidden h-screen w-[264px] shrink-0 flex-col border-r border-border bg-surface lg:flex">
-          <div className="border-b border-border px-5 py-5">
+        <aside className="sticky top-0 hidden h-screen w-[264px] shrink-0 flex-col border-r border-border/70 bg-surface lg:flex">
+          <div className="px-5 py-5">
             <Logo showSub />
           </div>
 
-          <nav className="flex-1 space-y-1 overflow-y-auto p-3" aria-label="Admin sections">
+          <nav className="flex-1 space-y-1.5 overflow-y-auto px-3 pb-3" aria-label="Admin sections">
             {ADMIN_NAV.map((item) => (
               <NavLink
                 key={item.href}
@@ -120,8 +124,8 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
             ))}
           </nav>
 
-          <div className="space-y-3 border-t border-border p-3">
-            <div className="rounded-xl bg-background p-3">
+          <div className="space-y-3 border-t border-border/70 p-3">
+            <div className="rounded-card border border-border/70 bg-background p-3.5">
               <p className="truncate text-sm font-bold text-foreground">{session.name}</p>
               <p className="truncate text-xs text-muted-foreground">{session.email}</p>
             </div>
@@ -165,14 +169,28 @@ function NavLink({
       onClick={onNavigate}
       aria-current={active ? "page" : undefined}
       className={cn(
-        "flex items-center gap-3 rounded-button px-3.5 py-2.5 text-[15px] font-semibold transition-colors",
+        "group relative flex items-center gap-3 rounded-button px-3.5 py-2.5 text-[15px] font-semibold transition-all duration-150",
         "focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-surface",
         active
-          ? "bg-primary-soft text-primary"
+          ? "bg-primary-soft text-primary shadow-sm"
           : "text-muted-foreground hover:bg-background hover:text-foreground",
       )}
     >
-      {icon}
+      {active ? (
+        <span
+          aria-hidden
+          className="absolute left-0 top-1/2 h-6 w-1 -translate-y-1/2 rounded-r-full bg-primary"
+        />
+      ) : null}
+      <span
+        className={cn(
+          "flex size-8 items-center justify-center rounded-lg transition-colors",
+          active ? "bg-surface text-primary shadow-sm" : "group-hover:bg-surface/70",
+        )}
+        aria-hidden
+      >
+        {icon}
+      </span>
       {label}
     </Link>
   );

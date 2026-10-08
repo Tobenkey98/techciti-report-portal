@@ -252,12 +252,15 @@ function TutorReminderRow({
       <WhatsAppIconButton
         phone={entry.instructor.phone}
         label={`Remind ${entry.instructor.fullName} on WhatsApp`}
-        message={messages.tutorReminder({
-          tutorFirstName: firstName(entry.instructor.fullName),
-          month: formatMonth(month),
-          outstanding: entry.outstanding,
-          link: `/t/${entry.instructor.token}`,
-        })}
+        message={
+          entry.reminderMessage ??
+          messages.tutorReminder({
+            tutorFirstName: firstName(entry.instructor.fullName),
+            month: formatMonth(month),
+            outstanding: entry.outstanding,
+            link: entry.portalUrl ?? `/t/${entry.instructor.token}`,
+          })
+        }
       />
 
       <Button
@@ -267,7 +270,16 @@ function TutorReminderRow({
         className="w-full shrink-0 sm:w-auto"
       >
         <a
-          href={reminderLink(entry.instructor.phone, entry.instructor.fullName, entry.instructor.token, entry.outstanding, month)}
+          href={
+            entry.whatsappLink ??
+            reminderLink(
+              entry.instructor.phone,
+              entry.instructor.fullName,
+              entry.portalUrl ?? `/t/${entry.instructor.token}`,
+              entry.outstanding,
+              month,
+            )
+          }
           target="_blank"
           rel="noopener noreferrer"
         >
@@ -279,22 +291,21 @@ function TutorReminderRow({
   );
 }
 
-/** Builds the wa.me deep link with the tutor's absolute portal URL. */
+/** Builds the wa.me deep link with the tutor's portal URL. */
 function reminderLink(
   phone: string,
   tutorName: string,
-  token: string,
+  link: string,
   outstanding: number,
   month: string,
 ): string {
-  const origin = typeof window === "undefined" ? "" : window.location.origin;
   return whatsappLink(
     phone,
     messages.tutorReminder({
       tutorFirstName: firstName(tutorName),
       month: formatMonth(month),
       outstanding,
-      link: `${origin}/t/${token}`,
+      link,
     }),
   );
 }

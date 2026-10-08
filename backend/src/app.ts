@@ -19,8 +19,8 @@ import { tutorRouter } from "./modules/tutor/tutor.routes.js";
  * and the ownership checks in every query. What CORS buys us here is defence in
  * depth: the tutor app cannot even *attempt* an admin call, and vice versa.
  */
-const ADMIN_ORIGINS = new Set([origins.admin]);
-const TUTOR_ORIGINS = new Set([origins.tutor]);
+const ADMIN_ORIGINS = new Set(origins.admin);
+const TUTOR_ORIGINS = new Set(origins.tutor);
 
 function corsFor(allowed: Set<string>): RequestHandler {
   const options: CorsOptions = {
@@ -135,13 +135,13 @@ export function createApp(): Application {
         namespaces: {
           admin: {
             base: "/api/admin",
-            origin: origins.admin,
+            origins: origins.admin,
             auth: "httpOnly cookie session (8h), set by POST /api/admin/auth/login",
             docs: "See README.md — Admin endpoints",
           },
           tutor: {
             base: "/api/tutor",
-            origin: origins.tutor,
+            origins: origins.tutor,
             auth: 'Header "X-Tutor-Token: <token from /t/<token> URL>"',
             docs: "See README.md — Tutor endpoints",
           },

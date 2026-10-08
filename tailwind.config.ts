@@ -58,17 +58,20 @@ const config: Config = {
         sans: ["var(--font-manrope)", "var(--font-jakarta)", "system-ui", "sans-serif"],
       },
       borderRadius: {
-        card: "12px",
-        button: "10px",
-        xl: "14px",
-        "2xl": "18px",
+        card: "16px",
+        button: "12px",
+        xl: "18px",
+        "2xl": "24px",
+        "3xl": "32px",
       },
       boxShadow: {
-        card: "0 1px 2px 0 rgb(16 24 40 / 0.04), 0 1px 3px 0 rgb(16 24 40 / 0.06)",
+        card: "0 1px 2px 0 rgb(16 24 40 / 0.04), 0 8px 24px -12px rgb(16 24 40 / 0.10)",
         "card-hover":
-          "0 4px 6px -1px rgb(16 24 40 / 0.07), 0 10px 20px -6px rgb(16 24 40 / 0.10)",
-        popover: "0 12px 32px -8px rgb(16 24 40 / 0.16), 0 4px 10px -4px rgb(16 24 40 / 0.08)",
-        header: "0 4px 18px -6px rgb(31 41 55 / 0.10)",
+          "0 2px 4px 0 rgb(16 24 40 / 0.05), 0 18px 38px -16px rgb(16 24 40 / 0.18)",
+        popover: "0 20px 48px -12px rgb(16 24 40 / 0.20), 0 6px 14px -6px rgb(16 24 40 / 0.10)",
+        header: "0 6px 24px -10px rgb(31 41 55 / 0.14)",
+        brand: "0 10px 30px -10px rgb(255 87 51 / 0.45)",
+        "brand-soft": "0 8px 24px -12px rgb(255 87 51 / 0.35)",
       },
       keyframes: {
         "accordion-down": {

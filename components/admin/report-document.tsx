@@ -16,10 +16,14 @@ export function ReportDocument({ report }: { report: ReportWithContext }) {
     : -1;
 
   return (
-    <article className="print-page mx-auto w-full max-w-3xl rounded-card border border-border bg-surface shadow-card">
+    <article className="print-page mx-auto w-full max-w-3xl overflow-hidden rounded-card border border-border bg-surface shadow-card">
       {/* Masthead */}
-      <header className="slant-bottom relative overflow-hidden bg-primary px-7 py-7 text-primary-foreground sm:px-10 sm:py-9">
-        <div className="hero-grid pointer-events-none absolute inset-0 opacity-60" aria-hidden />
+      <header className="brand-gradient relative overflow-hidden px-7 py-7 text-primary-foreground sm:px-10 sm:py-9">
+        <div className="hero-grid pointer-events-none absolute inset-0 opacity-45" aria-hidden />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -right-10 -top-14 size-44 rounded-full bg-primary-foreground/15 blur-2xl"
+        />
         <div className="relative flex flex-wrap items-start justify-between gap-6">
           <div className="flex items-center gap-3">
             <TechCitiMark className="size-11 rounded-xl" />

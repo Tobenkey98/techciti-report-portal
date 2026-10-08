@@ -1,7 +1,7 @@
 /* ------------------------------------------------------------------ *
  * Domain types for the TechCiti Tutor Report Portal.
- * These are the shapes the backend will need to return — the UI never
- * knows whether the data came from mocks or a real API.
+ * These are the shapes the UI renders; `lib/api.ts` maps the
+ * backend's responses onto them.
  * ------------------------------------------------------------------ */
 
 /** Academic month key, formatted `YYYY-MM` (e.g. "2026-10"). */
@@ -48,12 +48,24 @@ export interface Student {
   id: string;
   fullName: string;
   grade: string;
-  gender: "Male" | "Female";
   parentName: string;
   /** WhatsApp number for the parent, digits only. */
   parentPhone: string;
   status: EntityStatus;
   createdAt: string;
+}
+
+export interface Course {
+  id: string;
+  name: string;
+  category: string;
+  isActive: boolean;
+  createdAt: string;
+}
+
+export interface CourseFormValues {
+  name: string;
+  category: string;
 }
 
 export interface Assignment {
@@ -163,6 +175,12 @@ export interface OutstandingTutor {
   submitted: number;
   outstanding: number;
   students: string[];
+  /** Absolute portal URL from the backend (dashboard rows carry no token). */
+  portalUrl?: string;
+  /** Ready-made wa.me reminder link from the backend, when available. */
+  whatsappLink?: string | null;
+  /** Ready-made reminder text from the backend, when available. */
+  reminderMessage?: string | null;
 }
 
 export interface DashboardData {
@@ -271,7 +289,6 @@ export interface InstructorFormValues {
 export interface StudentFormValues {
   fullName: string;
   grade: string;
-  gender: Student["gender"];
   parentName: string;
   parentPhone: string;
 }
@@ -280,6 +297,7 @@ export interface AssignmentFormValues {
   instructorId: string;
   studentId: string;
   subject: string;
+  level: "BEGINNER" | "INTERMEDIATE" | "ADVANCED";
 }
 
 /* --------------------------------- Errors --------------------------------- */

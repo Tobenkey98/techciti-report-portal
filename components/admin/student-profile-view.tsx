@@ -103,12 +103,12 @@ export function StudentProfileView({ studentId }: { studentId: string }) {
                 )}
               </p>
               <p className="mt-1 text-sm text-muted-foreground">
-                {student.grade} · {student.gender} · joined {formatDate(student.createdAt)}
+                {student.grade} · joined {formatDate(student.createdAt)}
               </p>
             </div>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-3 sm:gap-8">
+          <div className="grid gap-4 sm:grid-cols-2 sm:gap-8">
             <div>
               <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
                 Reports
@@ -123,17 +123,6 @@ export function StudentProfileView({ studentId }: { studentId: string }) {
               </p>
               <p className="mt-1 text-2xl font-extrabold tabular text-foreground">
                 {averageIndex >= 0 ? PROGRESS_RATINGS[Math.round(averageIndex)] : "—"}
-              </p>
-            </div>
-            <div>
-              <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
-                Parent
-              </p>
-              <p className="mt-1 truncate text-sm font-semibold text-foreground">
-                {student.parentName || "—"}
-              </p>
-              <p className="text-xs tabular text-muted-foreground">
-                {student.parentPhone ? prettyPhone(student.parentPhone) : ""}
               </p>
             </div>
           </div>

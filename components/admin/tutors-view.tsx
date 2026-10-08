@@ -38,7 +38,7 @@ import {
 import { TutorDialog } from "@/components/admin/tutor-dialog";
 import { useAsyncData } from "@/hooks/use-async-data";
 import { useToast } from "@/hooks/use-toast";
-import { instructors as instructorsApi } from "@/lib/api";
+import { assignments as assignmentsApi, instructors as instructorsApi } from "@/lib/api";
 import { messages } from "@/lib/messages";
 import type { Instructor } from "@/lib/types";
 import { initials, initialsAvatarColor, prettyPhone } from "@/lib/utils";
@@ -57,6 +57,17 @@ export function TutorsView() {
   );
 
   const tutors = data ?? [];
+
+  const { data: assignmentData } = useAsyncData(() => assignmentsApi.list(), []);
+  const subjectsByTutor = React.useMemo(() => {
+    const map = new Map<string, string[]>();
+    for (const assignment of assignmentData ?? []) {
+      const list = map.get(assignment.instructorId) ?? [];
+      if (assignment.subject && !list.includes(assignment.subject)) list.push(assignment.subject);
+      map.set(assignment.instructorId, list);
+    }
+    return map;
+  }, [assignmentData]);
 
   async function toggleStatus(tutor: Instructor) {
     const next = tutor.status === "active" ? "inactive" : "active";
@@ -159,8 +170,8 @@ export function TutorsView() {
             </TableHeader>
             <TableBody>
               {tutors.map((tutor) => {
-                const link = `/t/${tutor.token}`;
                 const inactive = tutor.status === "inactive";
+                const subjects = subjectsByTutor.get(tutor.id) ?? [];
 
                 return (
                   <TableRow key={tutor.id} className={inactive ? "opacity-60" : undefined}>
@@ -189,11 +200,15 @@ export function TutorsView() {
 
                     <TableCell>
                       <div className="flex max-w-[240px] flex-wrap gap-1.5">
-                        {tutor.subjects.map((subject) => (
-                          <Badge key={subject} variant="primary" size="sm">
-                            {subject}
-                          </Badge>
-                        ))}
+                        {subjects.length ? (
+                          subjects.map((subject) => (
+                            <Badge key={subject} variant="primary" size="sm">
+                              {subject}
+                            </Badge>
+                          ))
+                        ) : (
+                          <span className="text-sm text-muted-foreground">No courses yet</span>
+                        )}
                       </div>
                     </TableCell>
 
@@ -210,20 +225,7 @@ export function TutorsView() {
 
                     <TableCell className="pr-5">
                       <div className="flex items-center justify-end gap-1.5">
-                        <CopyButton
-                          value={link}
-                          label="Copy link"
-                          onCopied={handleLinkCopied}
-                          className="hidden sm:inline-flex"
-                        />
-                        <WhatsAppIconButton
-                          phone={tutor.phone}
-                          label={`Send portal link to ${tutor.fullName} on WhatsApp`}
-                          message={messages.tutorLinkInvite({
-                            tutorName: tutor.fullName,
-                            link,
-                          })}
-                        />
+                        <TutorShareButtons tutor={tutor} onCopied={handleLinkCopied} />
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button variant="ghost" size="icon-sm" aria-label={`Actions for ${tutor.fullName}`}>
@@ -241,14 +243,7 @@ export function TutorsView() {
                               Edit details
                             </DropdownMenuItem>
                             <DropdownMenuItem asChild>
-                              <CopyButton
-                                value={link}
-                                label="Copy private link"
-                                variant="ghost"
-                                size="default"
-                                className="w-full justify-start"
-                                onCopied={handleLinkCopied}
-                              />
+                              <TutorCopyMenuItem tutor={tutor} onCopied={handleLinkCopied} />
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
@@ -297,7 +292,7 @@ export function TutorsView() {
             title: mode === "created" ? "Tutor added" : "Tutor updated",
             description:
               mode === "created"
-                ? `Send ${saved.fullName} their private link: /t/${saved.token}`
+                ? `${saved.fullName} was added. Copy their private link from the table.`
                 : `${saved.fullName}'s details are up to date.`,
           });
           void refresh();
@@ -321,5 +316,47 @@ export function TutorsView() {
         onConfirm={() => confirm && toggleStatus(confirm)}
       />
     </div>
+  );
+}
+
+/** Copy + WhatsApp buttons backed by the backend-issued portal link. */
+function TutorShareButtons({ tutor, onCopied }: { tutor: Instructor; onCopied: () => void }) {
+  const { data } = useAsyncData(() => instructorsApi.shareLink(tutor.id), [tutor.id]);
+  const portalUrl = data?.portalUrl ?? "";
+  const message =
+    data?.message ||
+    messages.tutorLinkInvite({ tutorName: tutor.fullName, link: portalUrl || "…" });
+
+  return (
+    <>
+      <CopyButton
+        value={portalUrl}
+        label="Copy link"
+        onCopied={onCopied}
+        disabled={!portalUrl}
+        className="hidden sm:inline-flex"
+      />
+      <WhatsAppIconButton
+        phone={tutor.phone}
+        label={`Send portal link to ${tutor.fullName} on WhatsApp`}
+        message={message}
+      />
+    </>
+  );
+}
+
+/** Dropdown-friendly copy item backed by the backend-issued portal link. */
+function TutorCopyMenuItem({ tutor, onCopied }: { tutor: Instructor; onCopied: () => void }) {
+  const { data } = useAsyncData(() => instructorsApi.shareLink(tutor.id), [tutor.id]);
+  return (
+    <CopyButton
+      value={data?.portalUrl ?? ""}
+      label="Copy private link"
+      variant="ghost"
+      size="default"
+      className="w-full justify-start"
+      disabled={!data?.portalUrl}
+      onCopied={onCopied}
+    />
   );
 }

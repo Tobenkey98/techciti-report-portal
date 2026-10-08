@@ -21,23 +21,6 @@ export const GRADES = [
   "SSS 3",
 ] as const;
 
-export const SUBJECTS = [
-  "Mathematics",
-  "English Language",
-  "Basic Science",
-  "Social Studies",
-  "Computer Studies",
-  "Basic Technology",
-  "Civic Education",
-  "Nigerian History",
-  "Agricultural Science",
-  "Further Mathematics",
-  "Arts & Crafts",
-  "Creative Arts",
-] as const;
-
-export const GENDERS = ["Male", "Female"] as const;
-
 /** Chips offered above the "Topics covered" textarea to save typing. */
 export const TOPIC_SUGGESTIONS: Record<string, string[]> = {
   Mathematics: [
@@ -172,11 +155,6 @@ export function gradeGroups(): { label: string; grades: readonly string[] }[] {
   ];
 }
 
-/** Shown on the login page and in the README for local development. */
-export const DEMO_ADMIN = {
-  email: "admin@techciti.ng",
-  password: "TechCiti2026!",
-};
-
+/** Fallback avatar for students without a photo. */
 export const PLACEHOLDER_STUDENT_IMAGE =
   "https://images.unsplash.com/photo-1544716798-6792525b84c2?auto=format&fit=crop&w=400&q=60";

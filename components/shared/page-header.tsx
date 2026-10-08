@@ -18,6 +18,7 @@ export function PageHeader({ title, description, actions, className }: PageHeade
       )}
     >
       <div className="min-w-0">
+        <span aria-hidden className="mb-3 flex h-1 w-10 rounded-full bg-primary" />
         <h1 className="text-2xl font-extrabold tracking-tight text-foreground sm:text-[28px]">
           {title}
         </h1>

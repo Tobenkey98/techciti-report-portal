@@ -36,8 +36,11 @@ export function InstructorPortal({ token }: { token: string }) {
 
   return (
     <div className="min-h-screen bg-background pb-24">
+      {/* Ambient glow */}
+      <div aria-hidden className="brand-glow pointer-events-none fixed inset-x-0 top-0 -z-10 h-[28rem]" />
+
       {/* Sticky brand bar */}
-      <header className="sticky top-0 z-30 border-b border-border bg-surface/95 backdrop-blur">
+      <header className="glass sticky top-0 z-30 border-b border-border/70 shadow-sm">
         <div className="mx-auto flex w-full max-w-5xl items-center justify-between gap-3 px-5 py-3 sm:px-8">
           <Logo showSub />
           <Badge variant="primary" className="hidden sm:inline-flex">
@@ -46,41 +49,47 @@ export function InstructorPortal({ token }: { token: string }) {
         </div>
       </header>
 
-      {/* Orange hero banner with the slanted edge */}
-      <section className="slant-bottom relative overflow-hidden bg-primary pb-24 pt-9 text-primary-foreground sm:pt-12">
-        <div className="hero-grid pointer-events-none absolute inset-0 opacity-70" aria-hidden />
-        <div className="relative mx-auto w-full max-w-5xl px-5 sm:px-8">
-          <p className="text-sm font-bold uppercase tracking-[0.14em] text-primary-foreground/85">
-            {formatMonth(month)} reporting
-          </p>
-          <h1 className="mt-2 text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
-            Hi, {data ? firstName(data.instructor.fullName) : "there"}
-          </h1>
-          <p className="mt-2 max-w-lg text-[15px] leading-relaxed text-primary-foreground/90">
-            Tap a student to fill their report. Everything saves automatically — you can
-            finish later.
-          </p>
+      {/* Modern hero panel */}
+      <section className="relative mx-auto mt-6 w-full max-w-5xl px-5 sm:px-8">
+        <div className="brand-gradient relative overflow-hidden rounded-3xl px-6 py-8 text-primary-foreground shadow-brand sm:px-9 sm:py-10">
+          <div className="hero-grid pointer-events-none absolute inset-0 opacity-50" aria-hidden />
+          <div
+            aria-hidden
+            className="pointer-events-none absolute -right-12 -top-16 size-56 rounded-full bg-primary-foreground/15 blur-2xl"
+          />
+          <div className="relative">
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary-foreground/85">
+              {formatMonth(month)} reporting
+            </p>
+            <h1 className="mt-2 text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
+              Hi, {data ? firstName(data.instructor.fullName) : "there"}
+            </h1>
+            <p className="mt-2 max-w-lg text-[15px] leading-relaxed text-primary-foreground/90">
+              Tap a student to fill their report. Everything saves automatically — you can
+              finish later.
+            </p>
 
-          <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
-            <div className="flex items-center gap-2">
-              <CalendarDays className="size-5 shrink-0" aria-hidden />
-              <label htmlFor="tutor-month" className="sr-only">
-                Reporting month
-              </label>
-              <MonthPicker
-                id="tutor-month"
-                value={month}
-                onChange={setMonth}
-                className="min-w-[180px] border-primary-foreground/40 bg-surface text-foreground"
-              />
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
+              <div className="flex items-center gap-2">
+                <CalendarDays className="size-5 shrink-0" aria-hidden />
+                <label htmlFor="tutor-month" className="sr-only">
+                  Reporting month
+                </label>
+                <MonthPicker
+                  id="tutor-month"
+                  value={month}
+                  onChange={setMonth}
+                  className="min-w-[180px] border-primary-foreground/40 bg-surface text-foreground"
+                />
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      <main id="main-content" className="mx-auto -mt-14 w-full max-w-5xl px-5 sm:px-8">
+      <main id="main-content" className="mx-auto -mt-6 w-full max-w-5xl px-5 sm:px-8">
         {/* Progress */}
-        <div className="rounded-card border border-border bg-surface p-5 shadow-card sm:p-6">
+        <div className="rounded-card border border-border/70 bg-surface p-5 shadow-card ring-1 ring-black/[0.02] sm:p-6">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
               <p className="text-sm font-bold text-foreground">

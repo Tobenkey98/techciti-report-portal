@@ -7,20 +7,20 @@ import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-button font-semibold transition-colors duration-150 disabled:pointer-events-none disabled:opacity-55 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-surface [&_svg]:pointer-events-none [&_svg]:shrink-0",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-button font-semibold transition-all duration-150 disabled:pointer-events-none disabled:opacity-55 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-surface [&_svg]:pointer-events-none [&_svg]:shrink-0",
   {
     variants: {
       variant: {
         /* White text on --primary is reserved for bold 15–16px labels (AA large-text). */
         primary:
-          "bg-primary text-[15px] font-bold text-primary-foreground shadow-sm hover:bg-primary-hover active:bg-primary-hover",
+          "bg-primary text-[15px] font-bold text-primary-foreground shadow-brand-soft hover:bg-primary-hover hover:shadow-brand active:translate-y-px",
         secondary:
-          "bg-surface text-[15px] text-foreground ring-1 ring-inset ring-border hover:bg-primary-soft hover:text-primary",
+          "bg-surface text-[15px] text-foreground ring-1 ring-inset ring-border shadow-sm hover:bg-primary-soft hover:text-primary hover:ring-primary/30 active:translate-y-px",
         outline:
-          "bg-transparent text-[15px] text-foreground ring-1 ring-inset ring-border hover:bg-primary-soft hover:text-primary",
+          "bg-transparent text-[15px] text-foreground ring-1 ring-inset ring-border hover:bg-primary-soft hover:text-primary hover:ring-primary/30",
         soft: "bg-primary-soft text-[15px] text-primary hover:bg-primary hover:text-primary-foreground",
         ghost: "bg-transparent text-[15px] text-muted-foreground hover:bg-primary-soft hover:text-primary",
-        danger: "bg-danger text-[15px] font-bold text-primary-foreground shadow-sm hover:bg-danger/90",
+        danger: "bg-danger text-[15px] font-bold text-primary-foreground shadow-sm hover:bg-danger/90 active:translate-y-px",
         link: "bg-transparent text-[15px] font-semibold text-primary underline-offset-4 hover:underline",
       },
       size: {

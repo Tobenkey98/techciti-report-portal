@@ -6,29 +6,38 @@ Tutors submit monthly student reports from a fast, dropdown-driven form on their
 Admins manage tutors, students and assignments, track who has submitted, and open any report
 as a branded document.
 
-> **Frontend only.** All data comes from a typed mock API layer (`lib/api.ts`) backed by
-> realistic seed data. Swap one environment flag to point the whole app at an Express backend.
+> **Full stack.** The Next.js frontend (`lib/api.ts`) talks to the Express + Prisma backend in
+> [`backend/`](backend/) — every screen reads and writes MySQL, there is no mock mode.
 
 ---
 
 ## Quick start
 
 ```bash
-npm install
-npm run dev
+# Backend (Express + Prisma + MySQL) — first run only: npm run setup
+cd backend && npm run dev        # http://localhost:4000
+
+# Frontend, in a second terminal
+npm run dev                      # http://localhost:3001 (or 3000)
 ```
 
-Open <http://localhost:3000>.
+Configuration lives in `.env.local` (see `.env.example`):
+
+```bash
+NEXT_PUBLIC_API_BASE_URL=http://localhost:4000/api
+```
 
 | Area | URL | Notes |
 | --- | --- | --- |
-| Landing page | `/` | Entry points + demo tutor links |
-| Admin login | `/admin/login` | `admin@techciti.ng` / `TechCiti2026!` |
+| Landing page | `/` | Tutor start page: private-link entry + reporting guide (no admin links) |
+| Admin login | `/admin/login` | Seeded admin: `admin@techciti.ng` / `TechCiti2026!` |
 | Admin dashboard | `/admin` | Requires sign-in |
-| Tutor portal | `/t/amaka-obi-9f2c` | One private link per tutor |
+| Tutor portal | `/t/[token]` | One private link per tutor, copied from `/admin/tutors` |
 
-The login page also lists working tutor links and an invalid one (`/t/this-token-does-not-exist`)
-so you can see every state without hunting through the code.
+Tutor links are issued by the backend per tutor — the admin copies one from the Tutors
+screen (copy link / send on WhatsApp) and the tutor pastes it into the box on the
+landing page to open their portal. The admin dashboard itself lives at `/admin/login`
+and is deliberately not linked from the landing page.
 
 ### Scripts
 
@@ -71,69 +80,61 @@ npm run lint       # eslint
 | `/admin/tutors` | Search, add / edit / deactivate, copy private link, send link on WhatsApp |
 | `/admin/students` | Search, grade + subject filters, add / edit / deactivate |
 | `/admin/students/[id]` | Student summary + timeline of every monthly report |
-| `/admin/assignments` | Link a tutor to a student + subject; a student can have several subjects or tutors |
+| `/admin/assignments` | Link a tutor to a student + course + level |
+| `/admin/courses` | Add / rename / deactivate the course catalogue |
 | `/admin/import` | CSV / Excel upload for tutors and students with preview table, error highlighting, and confirm |
 
 ---
 
-## Connecting the real backend
+## Talking to the backend
 
-Everything the UI reads or writes goes through **`lib/api.ts`**. No component imports mock data
-directly. `lib/mock-data.ts` is only ever touched by that file.
+Everything the UI reads or writes goes through **`lib/api.ts`** — a thin HTTP client over the
+Express API. No component fetches directly and there is no mock data anywhere in the frontend.
 
-### 1. Flip the switch
+### 1. Configure the URL
 
 ```bash
 # .env.local
-NEXT_PUBLIC_USE_MOCK_API=false
 NEXT_PUBLIC_API_BASE_URL=http://localhost:4000/api
 ```
 
-`request()` in `lib/api.ts` then performs real HTTP calls with the same return types.
+`request()` in `lib/api.ts` performs real HTTP calls, unwraps the backend's
+`{ success, data }` envelope and maps backend views to the frontend types in `lib/types.ts`.
 
-### 2. Implement the routes
+### 2. The routes it uses
 
-| Method | Route | Returns |
+Mounted under `/api` (see `backend/src/app.ts`):
+
+| Method | Route | Purpose |
 | --- | --- | --- |
-| POST | `/auth/login` | `AdminSession` |
-| GET | `/instructors` | `Instructor[]` |
-| POST | `/instructors` | `Instructor` |
-| PATCH | `/instructors/:id` | `Instructor` |
-| PATCH | `/instructors/:id/token` | `Instructor` |
-| GET | `/students` | `Student[]` |
-| POST/PATCH | `/students`, `/students/:id` | `Student` |
-| GET | `/students/:id/profile` | `StudentProfile` |
-| GET/POST/DELETE | `/assignments` | `Assignment[]` / `Assignment` |
-| GET | `/reports?month=&tutor=&…` | `PaginatedResult<ReportWithContext>` |
-| GET | `/reports/:id` | `ReportWithContext` |
-| PATCH | `/reports/:id` | `ReportWithContext` (review actions) |
-| GET | `/instructors/portal?token=&month=` | `InstructorPortalData` |
-| POST | `/reports/draft` | `Report` |
-| POST | `/reports/submit` | `Report` |
-| POST | `/reports/copy-previous` | `Report` |
-| GET | `/dashboard?month=` | `DashboardData` |
-| POST | `/import/preview`, `/import/commit` | `ImportPreview` / `ImportResult` |
-| GET | `/reports/:id/pdf`, `/reports/:id/docx` | `{ url }` |
+| POST | `/api/admin/auth/login` | Seeded admin sign-in → http-only cookie |
+| GET/POST/PATCH | `/api/admin/tutors` | List / create / edit tutors (+ activate, deactivate, link) |
+| GET/POST/PATCH | `/api/admin/students` | List / create / edit students (+ profile) |
+| GET/POST/DELETE | `/api/admin/assignments` | Link tutor ↔ student ↔ course |
+| GET | `/api/admin/courses` | Course list for filters and forms |
+| GET | `/api/admin/reports`, `/api/admin/reports/:id` | Paginated report table + detail |
+| POST | `/api/admin/reports/:id/review`, `/request-revision` | Review actions |
+| GET | `/api/admin/dashboard?month=` | Stat cards, outstanding tutors, recent submissions |
+| POST | `/api/admin/import/preview`, `/commit` | CSV / Excel bulk import |
+| GET/POST | `/api/tutor/...` (`X-Tutor-Token`) | Portal payload, draft save, submit |
 
-Errors should come back as `{ code, message, fieldErrors? }` where `code` is one of
-`NOT_FOUND | VALIDATION | DUPLICATE_REPORT | UNAUTHORIZED | CONFLICT` (see `ApiError` in `lib/types.ts`).
-`fieldErrors` powers the inline form errors.
+The backend's contract is enforced by `node scripts/contract-check.mjs` inside `backend/`
+(see [`backend/README.md`](backend/README.md) for setup, schema, seeds and API details).
 
-All types live in **`lib/types.ts`** — share that file with the backend (or generate from it).
+Errors come back as `{ success: false, error: { code, message, details } }`;
+`lib/api.ts` maps `code` to `ApiError` and flattens `details` into the inline `fieldErrors`.
 
 ### 3. Auth
 
-Mock mode stores the session in `localStorage` behind `auth.login/logout/getSession`
-(`hooks/use-admin-session.ts`). For production, return an http-only session cookie from
-`POST /auth/login` and read `session` in `app/admin/(portal)/layout.tsx` on the server —
-no component needs to change.
+`POST /api/admin/auth/login` sets an http-only session cookie; `auth.getSession()` reads it via
+`GET /api/admin/auth/session`, and `hooks/use-admin-session.ts` guards the admin routes. There is
+no token in `localStorage`.
 
 ### 4. PDF / Word downloads
 
-`documents.downloadPdf()` and `documents.downloadWord()` are **stubs that throw** with an
-explanatory `ApiError`. The on-screen layout in `components/admin/report-document.tsx` is the
-design of record: have the backend render that same structure (Playwright/Puppeteer → PDF,
-`docx` → Word). “Print → Save as PDF” already produces a clean A4 document thanks to the
+`documents.downloadPdf()` and `documents.downloadWord()` call the backend's export endpoints
+(Puppeteer → PDF, `docx` → Word). The on-screen layout in `components/admin/report-document.tsx`
+is the design of record, and “Print → Save as PDF” produces a clean A4 document thanks to the
 `@media print` rules in `app/globals.css`.
 
 ---
@@ -167,10 +168,9 @@ hooks/
   use-copy-to-clipboard.ts    copy helper
   use-media-query.ts          SSR-safe breakpoint hook
 lib/
-  api.ts                      ← the only data access layer
+  api.ts                      ← the only data access layer (HTTP client for the backend)
   types.ts                    domain + view models
-  mock-data.ts                5 tutors, 20 students, ~29 assignments, 3 months of reports
-  constants.ts                grades, subjects, chip copy, status colours, demo creds
+  constants.ts                grades, subjects, chip copy, status colours
   messages.ts                 WhatsApp message templates
   utils.ts                    cn(), date + month helpers, phone/wa.me helpers
 ```
@@ -202,8 +202,11 @@ Each colour also has an `*-rgb` channel triplet so Tailwind can apply alpha
   **self-hosted** as latin variable fonts in `app/fonts/` and loaded with `next/font/local`, so
   builds never depend on Google Fonts being reachable. To swap the real typeface, drop the woff2
   files in `app/fonts/` and update the two `localFont()` calls in `app/layout.tsx`.
-- **Signature detail:** the slanted diagonal edge (`.slant-bottom`, `.slant-left`, `.slant-right`
-  clip-paths) on the login panel and dashboard/portal header banners, echoing the techciti.ng hero.
+- **Signature detail:** soft brand gradients (`.brand-gradient`), ambient glows (`.brand-glow`),
+  frosted sticky headers (`.glass`) and a hover lift (`.lift`) on cards — used on the landing page,
+  login panel, tutor portal hero and report masthead.
+- **Radii & shadows:** cards are `16px`, buttons `12px`; elevation uses a two-layer shadow
+  (`shadow-card` / `shadow-card-hover`) plus `shadow-brand` for primary-tinted surfaces.
 - **Contrast:** white text is used on `--primary` only for bold 15–16px labels and large headings
   (WCAG AA large text). Body copy stays on `--foreground`/`--muted-foreground` for AA at any size.
 - Light theme only, for now.
@@ -223,23 +226,25 @@ Each colour also has an `*-rgb` channel triplet so Tailwind can apply alpha
 
 ## Seed data
 
-`lib/mock-data.ts` is deterministic (no `Math.random`), so the server and client render identical
-markup. It generates:
+All demo content lives in the **database**, seeded by `backend/prisma/seed.ts`
+(`npm run seed` inside `backend/`):
 
-- **5 tutors** with realistic names, subjects, WhatsApp numbers and private tokens.
-- **20 students** across Primary 4 → SSS 3 with parents' contact details.
-- **29 assignments** (some students have two subjects or two tutors).
-- **Reports for the last 3 months**, with the current month deliberately mixed: submitted, reviewed,
-  draft, needs-revision and not-started.
+- **A super admin** — `admin@techciti.ng` / `TechCiti2026!` (override with
+  `SUPER_ADMIN_EMAIL` / `SUPER_ADMIN_PASSWORD`).
+- **Courses** — Web Development Fundamentals, Python Programming, Data Analysis, etc.
+- **5 tutors** with WhatsApp numbers and private portal tokens.
+- **20 students** across the Kids / Teens age groups with parents' contact details.
+- **~39 assignments** (some students have two courses or two tutors) and **~117 reports**
+  over the last 3 months.
 
-Reset the mock data at any time by reloading the dev server (the store lives on `globalThis`),
-or call `resetMockData()` from `lib/api.ts` in the console.
+Re-seed any time with `npm run seed` (or `npm run setup` for a fresh database) inside
+`backend/`. Test rows created while trying the UI can be removed with
+`node scripts/purge-test-rows.mjs`.
 
 ---
 
 ## Notes & next steps
 
-- Frontend only — no backend, no database, no real authentication.
 - **Upgrade Next.js before deploying.** The pinned `next@15.1.6` is flagged by npm for
   CVE-2025-66478. Run `npm install next@latest` (and `eslint-config-next@latest`) when you have a
   reliable connection, then re-run `npm run build`.

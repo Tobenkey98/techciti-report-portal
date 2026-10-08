@@ -23,13 +23,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { students as studentsApi } from "@/lib/api";
-import { GENDERS, gradeGroups } from "@/lib/constants";
+import { gradeGroups } from "@/lib/constants";
 import type { Student, StudentFormValues } from "@/lib/types";
 
 const EMPTY: StudentFormValues = {
   fullName: "",
   grade: "",
-  gender: "Male",
   parentName: "",
   parentPhone: "",
 };
@@ -57,7 +56,6 @@ export function StudentDialog({
         ? {
             fullName: student.fullName,
             grade: student.grade,
-            gender: student.gender,
             parentName: student.parentName,
             parentPhone: student.parentPhone,
           }
@@ -121,7 +119,7 @@ export function StudentDialog({
               />
             </Field>
 
-            <div className="grid gap-5 sm:grid-cols-2">
+            <div className="grid gap-5 sm:grid-cols-1">
               <Field id="student-grade" label="Grade" required error={errors.grade}>
                 <Select
                   value={values.grade}
@@ -140,26 +138,6 @@ export function StudentDialog({
                           </SelectItem>
                         ))}
                       </SelectGroup>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </Field>
-
-              <Field id="student-gender" label="Gender">
-                <Select
-                  value={values.gender}
-                  onValueChange={(value) =>
-                    setValues((c) => ({ ...c, gender: value as Student["gender"] }))
-                  }
-                >
-                  <SelectTrigger id="student-gender">
-                    <SelectValue placeholder="Select gender" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {GENDERS.map((gender) => (
-                      <SelectItem key={gender} value={gender}>
-                        {gender}
-                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>

@@ -38,6 +38,8 @@ export interface TutorCard {
   submittedAt: string | null;
   updatedAt: string | null;
   revisionNote: string | null;
+  /** The full report for this assignment/month, or null when none exists yet. */
+  report: ReportView | null;
 }
 
 export interface TutorAssignmentsResult {
@@ -98,14 +100,18 @@ export async function listAssignments(tutorId: string, rawMonth?: string): Promi
     where: { tutorId, isActive: true },
     include: {
       ...assignmentWithRefs,
-      reports: { where: { month }, select: { id: true, status: true, progressRating: true, submittedAt: true, updatedAt: true, revisionNote: true } },
+      // The whole report is selected, not just its status: the tutor portal
+      // seeds its report form from this list, so the draft body has to arrive
+      // with the card. Truncating it here would force the portal into an N+1
+      // fetch, one call per student, purely to fill in a form.
+      reports: { where: { month } },
     },
     orderBy: [{ createdAt: "asc" }],
   });
 
   const students: TutorCard[] = assignments.map((assignment) => {
     const report = assignment.reports[0];
-    const view = report ? toReportView(report as never) : null;
+    const view = report ? toReportView(report) : null;
     return {
       assignmentId: assignment.id,
       studentId: assignment.studentId,
@@ -123,6 +129,7 @@ export async function listAssignments(tutorId: string, rawMonth?: string): Promi
       submittedAt: view?.submittedAt ?? null,
       updatedAt: view?.updatedAt ?? null,
       revisionNote: report?.revisionNote ?? null,
+      report: view,
     };
   });
 

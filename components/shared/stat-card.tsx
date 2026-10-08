@@ -22,10 +22,24 @@ export function StatCard({
   return (
     <div
       className={cn(
-        "group relative overflow-hidden rounded-card border border-border bg-surface p-5 shadow-card transition-shadow hover:shadow-card-hover",
+        "group relative overflow-hidden rounded-card border border-border/70 bg-surface p-5 shadow-card ring-1 ring-black/[0.02] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card-hover hover:ring-primary/20",
         className,
       )}
     >
+      <span
+        aria-hidden
+        className="absolute -right-6 -top-8 size-24 rounded-full opacity-[0.07] transition-opacity group-hover:opacity-[0.13]"
+        style={{
+          backgroundColor:
+            tone === "success"
+              ? "rgb(var(--success-rgb))"
+              : tone === "warning"
+                ? "rgb(var(--warning-rgb))"
+                : tone === "danger"
+                  ? "rgb(var(--danger-rgb))"
+                  : "rgb(var(--primary-rgb))",
+        }}
+      />
       <span
         aria-hidden
         className={cn(
@@ -49,7 +63,7 @@ export function StatCard({
         </div>
         <span
           className={cn(
-            "flex size-11 shrink-0 items-center justify-center rounded-xl",
+            "flex size-12 shrink-0 items-center justify-center rounded-2xl transition-transform duration-200 group-hover:scale-105",
             tone === "primary" && "bg-primary-soft text-primary",
             tone === "success" && "bg-success-soft text-success",
             tone === "warning" && "bg-warning-soft text-warning",
