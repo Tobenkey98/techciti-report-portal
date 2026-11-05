@@ -8,7 +8,7 @@ import "./globals.css";
  * Fonts are self-hosted (see `app/fonts/`) so builds never depend on Google
  * Fonts being reachable. Both files are the latin variable fonts:
  * Manrope 400–800 (primary) and Plus Jakarta Sans 400–700 (fallback).
- */
+ */       
 const manrope = localFont({
   src: "./fonts/manrope-latin-variable.woff2",
   weight: "400 800",

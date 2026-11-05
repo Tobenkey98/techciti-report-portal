@@ -425,6 +425,16 @@ export const auth = {
     return session;
   },
 
+  async setup(name: string, email: string, password: string): Promise<AdminSession> {
+    const payload = await request<{ admin?: BackendAdmin }>("/auth/setup", {
+      method: "POST",
+      body: { name: name.trim(), email: email.trim().toLowerCase(), password },
+    });
+    const session = mapSession(payload);
+    if (!session) throw new ApiError("CONFLICT", "An admin account already exists. Sign in instead.");
+    return session;
+  },
+
   async logout(): Promise<void> {
     await request("/auth/logout", { method: "POST" });
   },
@@ -435,6 +445,15 @@ export const auth = {
       return mapSession(payload);
     } catch {
       return null;
+    }
+  },
+
+  async checkAdminExists(): Promise<boolean> {
+    try {
+      const payload = await request<{ exists: boolean }>("/auth/exists");
+      return payload?.exists ?? false;
+    } catch {
+      return false;
     }
   },
 };

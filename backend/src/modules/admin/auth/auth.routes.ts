@@ -4,7 +4,7 @@ import { env } from "../../../config/env.js";
 import { prisma } from "../../../lib/prisma.js";
 import { asyncHandler } from "../../../lib/async-handler.js";
 import { hashPassword, signAdminToken, verifyAdminToken, verifyPassword } from "../../../lib/crypto.js";
-import { badRequest, unauthorized } from "../../../lib/errors.js";
+import { badRequest, conflict, unauthorized } from "../../../lib/errors.js";
 import { toAdminView } from "../../../lib/serialize.js";
 import { loginLimiter } from "../../../middleware/rate-limit.js";
 import { requireAdmin } from "../../../middleware/auth-admin.js";
@@ -28,6 +28,12 @@ const passwordBodySchema = z.object({
   currentPassword: z.string().min(1, "Enter your current password."),
   newPassword: passwordSchema,
   confirmPassword: z.string().optional(),
+});
+
+const setupBodySchema = z.object({
+  name: z.string().min(1, "Name is required.").max(120),
+  email: emailSchema,
+  password: passwordSchema,
 });
 
 /**
@@ -205,6 +211,61 @@ authRouter.patch(
     await auditAdmin(admin, "auth.password_changed", "admin", admin.id);
 
     res.json({ success: true, data: { message: "Password updated." } });
+  }),
+);
+
+/** POST /api/admin/auth/setup — one-time admin sign-up (only when no admins exist) */
+authRouter.post(
+  "/setup",
+  asyncHandler(async (req, res) => {
+    // Check if any admin already exists — if so, reject the request
+    const existingAdmin = await prisma.admin.findFirst({});
+    if (existingAdmin) {
+      throw conflict("An admin account already exists. Sign in instead.", {
+        admin: "An admin already exists.",
+      });
+    }
+
+    const validation = setupBodySchema.safeParse(req.body);
+    if (!validation.success) {
+      throw badRequest("Invalid setup data", validation.error.format());
+    }
+
+    const { name, email, password } = validation.data;
+
+    // Create the first admin with SUPER_ADMIN role
+    const admin = await prisma.admin.create({
+      data: {
+        name,
+        email,
+        role: "SUPER_ADMIN",
+        passwordHash: await hashPassword(password),
+        isActive: true,
+      },
+    });
+
+    // Sign in and set session cookie
+    const token = signAdminToken({ adminId: admin.id, email: admin.email, role: admin.role });
+    setSessionCookie(res, token);
+
+    // Update last login
+    await prisma.admin.update({
+      where: { id: admin.id },
+      data: { lastLoginAt: new Date() },
+    });
+
+    await auditAdmin(admin, "admin.created", "admin", admin.id, { role: admin.role });
+
+    res.json({ success: true, data: { admin: toAdminView(admin) } });
+  }),
+);
+
+/** GET /api/admin/auth/exists — check if any admin accounts exist (for first-time setup flow) */
+authRouter.get(
+  "/exists",
+  asyncHandler(async (_req, res) => {
+    const existingAdmin = await prisma.admin.findFirst({ select: { id: true } });
+    res.json({ success: true, data: { exists: !!existingAdmin } });
   }),
 );
 

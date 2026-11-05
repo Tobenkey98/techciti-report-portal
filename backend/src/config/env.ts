@@ -82,9 +82,7 @@ const schema = z.object({
   COOKIE_NAME: z.string().default("techciti_admin_session"),
   COOKIE_SECURE: booleanish.default("false"),
 
-  SUPER_ADMIN_NAME: z.string().default("TechCiti Super Admin"),
-  SUPER_ADMIN_EMAIL: z.string().email().default("admin@techciti.ng"),
-  SUPER_ADMIN_PASSWORD: z.string().min(8).default("TechCiti2026!"),
+  
 
   /**
    * Origins allowed to call `/api/admin/*`, comma-separated.

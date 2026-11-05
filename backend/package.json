@@ -7,7 +7,7 @@
   "engines": {
     "node": ">=20"
   },
-  "scripts": {
+    "scripts": {
     "dev": "tsx watch src/server.ts",
     "build": "prisma generate && tsc -p tsconfig.json",
     "start": "node dist/server.js",
@@ -18,11 +18,7 @@
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
     "db:studio": "prisma studio",
-    "db:sql": "node scripts/write-schema-sql.mjs",
-    "db:reset": "prisma migrate reset --force",
-    "seed": "tsx prisma/seed.ts",
-    "db:clear": "node scripts/clear-database.mjs",
-    "setup": "npm run db:generate && npm run db:push && npm run seed"
+    "db:reset": "prisma migrate reset --force"
   },
   "dependencies": {
     "@prisma/client": "^6.3.1",

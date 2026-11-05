@@ -8,6 +8,7 @@ interface AdminSessionState {
   session: AdminSession | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<AdminSession>;
+  signUp: (name: string, email: string, password: string) => Promise<AdminSession>;
   signOut: () => Promise<void>;
 }
 
@@ -50,6 +51,14 @@ export function useAdminSession(): AdminSessionState {
     return next;
   }, []);
 
+  const signUp = React.useCallback(async (name: string, email: string, password: string) => {
+    const next = await auth.setup(name, email, password);
+    cache = next;
+    cacheLoaded = true;
+    setSession(next);
+    return next;
+  }, []);
+
   const signOut = React.useCallback(async () => {
     await auth.logout();
     cache = null;
@@ -57,5 +66,5 @@ export function useAdminSession(): AdminSessionState {
     setSession(null);
   }, []);
 
-  return { session, loading, signIn, signOut };
+  return { session, loading, signIn, signUp, signOut };
 }
