@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "description": "TechCiti Tutor Report Portal — monthly student reporting for tutors and admins.",
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
