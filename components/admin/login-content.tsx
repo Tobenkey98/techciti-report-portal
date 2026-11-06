@@ -1,4 +1,5 @@
 "use client";
+// Admin login content component
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
